@@ -16,7 +16,8 @@ node('slave1'){
     // Run the program
         sh script: "ssh root@10.18.134.106"
         echo "ssh done"
-        sh script: "scp -r root@10.18.134.106:/home/ocean/ReadRetryCount/Readretrylog_20180710195812.txt root@10.25.132.128:~/Workspace"              
+        sh script: "scp -r root@10.18.134.106:/home/ocean/ReadRetryCount/Readretrylog_20180710195812.txt /home/logs"
+        archiveArtifacts artifacts: '/home/logs/**', fingerprint: true
     }  
 }
 
