@@ -18,6 +18,7 @@ node('slave1'){
         sh script: "scp -r root@10.18.134.106:/home/ocean/ReadRetryCount/Readretrylog_20180710195812.txt /home/jenkins/workspace/Log_Upload_Test"
         sh script: "ls"
         archiveArtifacts artifacts: '**/*.txt', fingerprint: true        
-        echo "ssh done"                  
+        echo "ssh done"
+        //               
     }  
 }
