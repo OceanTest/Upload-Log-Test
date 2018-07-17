@@ -1,24 +1,31 @@
-def CD_IP = env.CD_IP
-
-node('slave1'){
-    // Mark the code checkout 'stage'....
-    stage('Checkout'){
-        // Get some code from a GitHub repository
-        git([url: 'https://github.com/OceanTest/Upload-Log-Test.git', branch: 'master'])
-        
+import groovy.xml.*
+import static java.util.UUID.randomUUID
+def testName = "Jenkins"
+timestamps {
+    node("slave1") {
+        stage("GenerateXML") {
+            writeFile(file: 'test.xml', text: ParseToHTMLTable(['X', 'Y', 'Z'], 3))
+            sh script: "ls"
+             // publish html
+            sh script: "pwd"
+            archiveArtifacts(artifacts: 'test.xml', excludes: null)
+            currentBuild.description = currentBuild.description + "<br /></strong>${ParseToHTMLTable(command, params)}"
+        }
     }
-    stage('Do FIO Retry Test'){
-        // Run the program
-        sh script:"ssh ${CD_IP} 'cd /home/ocean/ReadRetryCount;python rdrery_test.py'"
-    }
-    // Mark the code SSH upload'stage'....
-    stage('Upload Log'){
-    // Run the program
-        sh script: "ssh ${CD_IP} 'cd /home/ocean/ReadRetryCount/; ls'"
-        sh script: "scp -r ${CD_IP}:/home/ocean/ReadRetryCount/Readretrylog_*.txt /home/jenkins/workspace/Log_Upload_Test"
-        sh script: "ls"
-        archiveArtifacts artifacts: '**/*.txt', fingerprint: true        
-        echo "ssh done"
-        //               
-    }  
 }
+@NonCPS
+def ParseToHTMLTable(columns, rowCount) {
+    def writer = new StringWriter()
+    def markupBuilder = new MarkupBuilder(writer)
+    markupBuilder.table(style: 'border:1px solid;text-align:center;') {
+        (1..rowCount).each { row ->
+            delegate.delegate.tr {
+                delegate.td(row)
+                columns.each {delegate.delegate.td((Math.random() * 9999) as int ) }
+            }
+        }       
+    }
+    echo "Bug Here???"
+    return writer.toString()
+}
+
