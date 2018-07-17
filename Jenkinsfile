@@ -3,6 +3,11 @@ import static java.util.UUID.randomUUID
 def testName = "Jenkins"
 timestamps {
     node("slave1") {
+        stage('Checkout'){
+        // Get some code from a GitHub repository
+            git([url: 'https://github.com/OceanTest/Upload-Log-Test.git', branch: 'master'])        
+        }
+        
         stage("GenerateXML") {
             writeFile(file: 'test.xml', text: ParseToHTMLTable(['X', 'Y', 'Z'], 3))
             sh script: "ls"
