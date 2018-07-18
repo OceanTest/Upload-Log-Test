@@ -9,8 +9,11 @@ timestamps {
             git([url: 'https://github.com/OceanTest/Upload-Log-Test.git', branch: 'master'])        
         }
         Map builds = ["build_1":'passed', "build_2":'failed']
+        Map currentTestResults = [
+                  "build_1": collectTestResults('**/Log_Test.log')
+                ]
         stage("GenerateXML") {
-            writeFile(file: 'ocean_test.xml', text: resultsAsJUnit(builds))
+            writeFile(file: 'ocean_test.xml', text: resultsAsJUnit(currentTestResults))
             sh script: "ls"
              // publish html
             sh script: "pwd"
@@ -22,6 +25,16 @@ timestamps {
         }
     }
 }
+// Helper functions
+def collectTestResults(logFile) {
+  // Initialize empty result map
+  def resultMap = [:]
+  String  testName   = (logFile =~ /(\w*)\.log/)[0][1]
+  boolean testPassed = readFile(logFile).contains("=== Test Passed OK ===")
+  resultMap << [(testName): testPassed]
+  return resultMap
+}
+
 @NonCPS
 String resultsAsJUnit(def testResults) {
     StringWriter  stringWriter  = new StringWriter()
