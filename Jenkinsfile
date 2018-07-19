@@ -32,6 +32,7 @@ def collectTestResults(logFile) {
   def resultMap = [:]
   String  testName   = (logFile =~ /(\w*)\.log/)[0][1]
   boolean testPassed = readFile(logFile).contains("=== Test Passed OK ===")
+  //echo "${testPassed}"
   resultMap << [(testName): testPassed]
   return resultMap
 }
@@ -43,8 +44,17 @@ String resultsAsJUnit(def testResults) {
     // All those delegate calls here are messing up the elegancy of the MarkupBuilder
     // but are needed due to https://issues.jenkins-ci.org/browse/JENKINS-32766
     markupBuilder.testsuites {
-        delegate.testsuite(name: "testName", tests: testResults.size(), failures: "1") {
-            delegate.testcase(name: "testName", build_number: "1")            
+        testResults.each{ test, testresult ->
+            delegate.delegate.testsuite(name: testresult.testName, tests: testresult.size(), failures: testresult.values().count(false)) {
+                testresult.each{ testName, testPassed ->
+                    delegate.delegate.testcase(name: testName) {
+                        if(!testPassed){
+                            echo "${testResults.testPassed}"
+                            delegate.failure()
+                        }
+                    }
+                }
+            }
         }
     }  
   return stringWriter.toString()
