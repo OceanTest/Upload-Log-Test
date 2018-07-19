@@ -3,16 +3,17 @@ import static java.util.UUID.randomUUID
 def testName = "Jenkins"
 def numberOfBuild = '1'
 timestamps {
-    node("slave1") {
+    node("ocean_linux_node") {
         stage('Checkout'){
         // Get some code from a GitHub repository
             git([url: 'https://github.com/OceanTest/Upload-Log-Test.git', branch: 'master'])        
         }
         Map builds = ["build_1":'passed', "build_2":'failed']
         Map currentTestResults = [
-                  "build_1": collectTestResults('**/Log_Test.log')
+                  "build_1": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test.log')
                 ]
         stage("GenerateXML") {
+            currentBuild.description = "Test"
             writeFile(file: 'ocean_test.xml', text: resultsAsJUnit(currentTestResults))
             sh script: "ls"
              // publish html
