@@ -10,7 +10,8 @@ timestamps {
         }
         Map builds = ["build_1":'passed', "build_2":'failed']
         Map currentTestResults = [
-                  "build_1": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test.log')
+                  "build_1": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test.log'),
+                  "build_2": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test2.log')
                 ]
         stage("GenerateXML") {
             currentBuild.description = "Test"
@@ -23,6 +24,7 @@ timestamps {
                   $class: 'JUnitResultArchiver',
                   testResults: '**/ocean_test.xml'
                 ])
+            currentBuild.description = "<br /></strong>${resultsAsTable(currentTestResults)}"
         }
     }
 }
@@ -35,6 +37,31 @@ def collectTestResults(logFile) {
   //echo "${testPassed}"
   resultMap << [(testName): testPassed]
   return resultMap
+}
+
+@NonCPS
+String resultsAsTable(def testResults) {
+  StringWriter  stringWriter  = new StringWriter()
+  MarkupBuilder markupBuilder = new MarkupBuilder(stringWriter)
+
+  // All those delegate calls here are messing up the elegancy of the MarkupBuilder
+  // but are needed due to https://issues.jenkins-ci.org/browse/JENKINS-32766
+  markupBuilder.html {
+    delegate.body {
+      delegate.style(".passed { color: #468847; background-color: #dff0d8; border-color: #d6e9c6; } .failed { color: #b94a48; background-color: #f2dede; border-color: #eed3d7; }", type: 'text/css')
+      delegate.table {
+        testResults.each { test, testResult ->
+          testResult.each { testName, testPassed ->
+            delegate.delegate.delegate.tr {
+              delegate.td("$testName", class: testPassed ? 'passed' : 'failed')
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return stringWriter.toString()
 }
 
 @NonCPS
