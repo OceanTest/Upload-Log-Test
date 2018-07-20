@@ -1,42 +1,54 @@
 import groovy.xml.*
 import static java.util.UUID.randomUUID
-def testName = "Jenkins"
-def numberOfBuild = '1'
+
 timestamps {
     node("ocean_linux_node") {
         stage('Checkout'){
         // Get some code from a GitHub repository
             git([url: 'https://github.com/OceanTest/Upload-Log-Test.git', branch: 'master'])        
         }
-        Map builds = ["build_1":'passed', "build_2":'failed']
-        Map currentTestResults = [
-                  "build_1": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test.log'),
-                  "build_2": collectTestResults('/home/jenkins/workspace/Log_Upload_Test/Log_Test2.log')
-                ]
+        
+        Map currentTestResults = [ "Test": collectTestResults()]        
         stage("GenerateXML") {
             currentBuild.description = "Test"
             writeFile(file: 'ocean_test.xml', text: resultsAsJUnit(currentTestResults))
-            sh script: "ls"
-             // publish html
-            sh script: "pwd"
+            //Generate the Junit Report 
             archiveArtifacts(artifacts: 'ocean_test.xml', excludes: null)
             step([
                   $class: 'JUnitResultArchiver',
                   testResults: '**/ocean_test.xml'
                 ])
+            //Publish the Table      
             currentBuild.description = "<br /></strong>${resultsAsTable(currentTestResults)}"
         }
     }
 }
+
 // Helper functions
-def collectTestResults(logFile) {
+def collectTestResults() {
   // Initialize empty result map
-  def resultMap = [:]
-  String  testName   = (logFile =~ /(\w*)\.log/)[0][1]
-  boolean testPassed = readFile(logFile).contains("=== Test Passed OK ===")
-  //echo "${testPassed}"
-  resultMap << [(testName): testPassed]
+    String  testName
+    boolean testPassed 
+    def resultMap = [:]
+    def logFiles = sh (
+            script: "ls **/Log_Test*.log",
+            returnStdout:true
+            ).readLines()
+
+    logFiles.each{ logFile ->            
+            testName   = (logFile =~ /(\w*)\.log/)[0][1]
+            testPassed = readFile(logFile).contains("=== Test Passed OK ===")
+            resultMap << [(testName): testPassed]
+        }
   return resultMap
+}
+
+def logParser(logFile) {
+  // Initialize empty result map
+  def logMap = [:]
+  String  testName = (logFile =~ /(\w*)\.log/)[0][1]
+  logMap << [(testName): logFile]
+  return logMap
 }
 
 @NonCPS
@@ -60,7 +72,6 @@ String resultsAsTable(def testResults) {
       }
     }
   }
-
   return stringWriter.toString()
 }
 
