@@ -31,7 +31,7 @@ def collectTestResults() {
     boolean testPassed 
     def resultMap = [:]
     def logFiles = sh (
-            script: "ls **/Log_Test*.log",
+            script: "ls /home/jenkins/workspace/Log_Upload_Test/Log_Test*.log",
             returnStdout:true
             ).readLines()
 
